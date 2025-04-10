@@ -1,3 +1,4 @@
+import { useChat } from '@ai-sdk/react'
 import { useEffect, useRef } from 'react'
 
 const SEARCH_ENGINES = {
@@ -9,7 +10,18 @@ const SEARCH_ENGINES = {
   C: 'https://chat.openai.com/?q='
 }
 
-function SearchBar({ ref }: { ref: React.RefObject<HTMLInputElement> }): JSX.Element {
+function App(): JSX.Element {
+  const searchRef = useRef<HTMLInputElement>(null)
+  const { messages, handleInputChange } = useChat({
+    api: 'http://localhost:3000/api/stream-ai'
+  })
+
+  useEffect(() => {
+    if (searchRef.current) {
+      searchRef.current.focus()
+    }
+  }, [])
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === 'Enter') {
       const searchQuery = e.currentTarget.value.trim()
@@ -36,36 +48,33 @@ function SearchBar({ ref }: { ref: React.RefObject<HTMLInputElement> }): JSX.Ele
   }
 
   return (
-    <div className='w-full'>
-      <input
-        type='search'
-        ref={ref}
-        onKeyDown={handleKeyDown}
-        className='w-full rounded-xl bg-neutral-700 p-4 focus-within:ring-1 focus-within:ring-neutral-500 focus-within:ring-opacity-50 focus-within:ring-offset-2 focus-within:ring-offset-neutral-500 focus:outline-none'
-        placeholder='Search...'
-      />
-    </div>
-  )
-}
-
-function App(): JSX.Element {
-  // const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
-  const searchRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    if (searchRef.current) {
-      searchRef.current.focus()
-    }
-  }, [])
-
-  return (
     <div
       onClick={() => searchRef.current?.focus()}
       className='flex h-screen flex-col items-center bg-neutral-800 py-8 text-white'
     >
       <h1 className='mb-4 text-2xl font-medium'>Quick Search</h1>
       <div className='w-full px-8'>
-        <SearchBar ref={searchRef} />
+        <form>
+          <div className='w-full'>
+            <input
+              type='search'
+              ref={searchRef}
+              onKeyDown={handleKeyDown}
+              onChange={handleInputChange}
+              className='w-full rounded-xl bg-neutral-700 p-4 focus-within:ring-1 focus-within:ring-neutral-500 focus-within:ring-opacity-50 focus-within:ring-offset-2 focus-within:ring-offset-neutral-500 focus:outline-none'
+              placeholder='Search or type / for AI...'
+            />
+          </div>
+        </form>
+      </div>
+      <div className='w-full px-8'>
+        <div className='flex flex-col gap-2'>
+          {messages.map((message, index) => (
+            <div key={index}>
+              <p>{message.content}</p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )

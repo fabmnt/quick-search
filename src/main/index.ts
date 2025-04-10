@@ -1,8 +1,11 @@
-import { app, shell, BrowserWindow, ipcMain, globalShortcut, Tray, Menu, App } from 'electron'
+import { electronApp, is, optimizer } from '@electron-toolkit/utils'
+import { app, App, BrowserWindow, globalShortcut, ipcMain, Menu, shell, Tray } from 'electron'
 import { join } from 'path'
-import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-
+// Express imports
+import cors from 'cors'
+import express from 'express'
+import streamAi from './stream-ai'
 // Add isQuitting property to app object
 interface AppWithIsQuitting extends App {
   isQuitting: boolean
@@ -14,6 +17,35 @@ appWithQuitting.isQuitting = false
 
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
+let expressApp: express.Express | null = null
+const PORT = 3000
+
+// Create Express server
+function createExpressServer(): void {
+  expressApp = express()
+
+  expressApp.use(express.json())
+  // Define routes
+  expressApp.use(cors({ origin: '*' }))
+  expressApp.use('/api/', streamAi)
+
+  // API endpoint for app info
+  expressApp.get('/api/app-info', (_, res) => {
+    res.json({
+      appName: app.getName(),
+      appVersion: app.getVersion(),
+      electronVersion: process.versions.electron,
+      nodeVersion: process.versions.node,
+      platform: process.platform,
+      isDevMode: is.dev
+    })
+  })
+
+  // Start server
+  expressApp.listen(PORT, () => {
+    console.log(`Express server running on port ${PORT}`)
+  })
+}
 
 function createWindow(): void {
   // Create the browser window.
@@ -141,6 +173,9 @@ app.whenReady().then(() => {
   ipcMain.on('ping', () => console.log('pong'))
 
   createWindow()
+
+  // Start Express server
+  createExpressServer()
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
