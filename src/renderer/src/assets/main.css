@@ -1,3 +1,29 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+body {
+  --sb-track-color: #232e33;
+  --sb-thumb-color: #696969;
+  --sb-size: 6px;
+}
+
+.scroll-bar::-webkit-scrollbar {
+  width: var(--sb-size);
+}
+
+.scroll-bar::-webkit-scrollbar-track {
+  @apply bg-neutral-800;
+  border-radius: 3px;
+}
+
+.scroll-bar::-webkit-scrollbar-thumb {
+  background: var(--sb-thumb-color);
+  border-radius: 3px;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  .scroll-bar {
+    scrollbar-color: var(--sb-thumb-color) var(--sb-track-color);
+  }
+}

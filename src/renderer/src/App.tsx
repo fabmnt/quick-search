@@ -1,5 +1,5 @@
-import { useChat } from '@ai-sdk/react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import Markdown from 'react-markdown'
 
 const SEARCH_ENGINES = {
   G: 'https://www.google.com/search?q=',
@@ -7,20 +7,57 @@ const SEARCH_ENGINES = {
   B: 'https://www.bing.com/search?q=',
   A: 'https://www.ask.com/web?q=',
   Y: 'https://www.yahoo.com/search?p=',
-  C: 'https://chat.openai.com/?q='
+  C: 'https://chat.openai.com/?q=',
+  P: 'https://www.perplexity.ai/search?q='
 }
 
 function App(): JSX.Element {
   const searchRef = useRef<HTMLInputElement>(null)
-  const { messages, handleInputChange } = useChat({
-    api: 'http://localhost:3000/api/stream-ai'
-  })
+  const [aiResponse, setAiResponse] = useState<string>('')
+  const [isStreaming, setIsStreaming] = useState<boolean>(false)
 
   useEffect(() => {
     if (searchRef.current) {
       searchRef.current.focus()
     }
   }, [])
+
+  const streamAiResponse = async (query: string): Promise<void> => {
+    setIsStreaming(true)
+    setAiResponse('')
+
+    try {
+      const response = await fetch('http://localhost:3000/api/stream-ai', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          prompt: query
+        })
+      })
+
+      if (!response.body) {
+        throw new Error('Response body is null')
+      }
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        const chunk = decoder.decode(value)
+        setAiResponse((prev) => prev + chunk)
+      }
+    } catch (error) {
+      console.error('Error streaming AI response:', error)
+      setAiResponse('Error: Could not retrieve AI response')
+    } finally {
+      setIsStreaming(false)
+    }
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === 'Enter') {
@@ -31,13 +68,19 @@ function App(): JSX.Element {
       if (!searchEngine.startsWith('!')) {
         searchEngine = 'G'
       } else {
-        searchEngine = searchEngine.slice(1)
+        searchEngine = searchEngine.slice(1).toUpperCase()
         explicitSearchEngine = true
       }
 
       let searchTerm = searchQuery
       if (explicitSearchEngine) {
         searchTerm = searchQuery.split(' ').slice(0, -1).join(' ')
+      }
+
+      // Handle AI streaming for !A
+      if (explicitSearchEngine && searchEngine === 'A') {
+        streamAiResponse(searchTerm)
+        return
       }
 
       if (searchTerm) {
@@ -50,32 +93,31 @@ function App(): JSX.Element {
   return (
     <div
       onClick={() => searchRef.current?.focus()}
-      className='flex h-screen flex-col items-center bg-neutral-800 py-8 text-white'
+      className='flex h-screen flex-col items-center gap-y-4 bg-neutral-800 py-4 text-white'
     >
-      <h1 className='mb-4 text-2xl font-medium'>Quick Search</h1>
+      <h1 className='text-2xl font-medium'>Quick Search</h1>
       <div className='w-full px-8'>
-        <form>
-          <div className='w-full'>
-            <input
-              type='search'
-              ref={searchRef}
-              onKeyDown={handleKeyDown}
-              onChange={handleInputChange}
-              className='w-full rounded-xl bg-neutral-700 p-4 focus-within:ring-1 focus-within:ring-neutral-500 focus-within:ring-opacity-50 focus-within:ring-offset-2 focus-within:ring-offset-neutral-500 focus:outline-none'
-              placeholder='Search or type / for AI...'
-            />
-          </div>
-        </form>
-      </div>
-      <div className='w-full px-8'>
-        <div className='flex flex-col gap-2'>
-          {messages.map((message, index) => (
-            <div key={index}>
-              <p>{message.content}</p>
-            </div>
-          ))}
+        <div className='w-full'>
+          <input
+            type='search'
+            ref={searchRef}
+            onKeyDown={handleKeyDown}
+            className='w-full rounded-xl bg-neutral-700 p-4 focus-within:ring-1 focus-within:ring-neutral-500 focus-within:ring-opacity-50 focus-within:ring-offset-2 focus-within:ring-offset-neutral-500 focus:outline-none'
+            placeholder='Search anything...'
+          />
         </div>
       </div>
+
+      {(aiResponse || isStreaming) && (
+        <div className='mt-4 w-full px-8'>
+          <div className='rounded-xl bg-neutral-700 p-4 text-white'>
+            {isStreaming && !aiResponse && <div className='animate-pulse'>Thinking...</div>}
+            <div className='scroll-bar h-full max-h-52 overflow-y-auto whitespace-pre-wrap text-sm'>
+              <Markdown>{aiResponse}</Markdown>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
