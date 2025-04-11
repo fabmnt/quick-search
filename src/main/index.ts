@@ -57,7 +57,7 @@ function createWindow(): void {
     autoHideMenuBar: true,
     title: 'Quick Search',
     roundedCorners: true,
-    titleBarStyle: 'hiddenInset',
+    titleBarStyle: 'hidden',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false
