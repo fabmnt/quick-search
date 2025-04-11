@@ -32,7 +32,7 @@ route.post('/translate', async (req, res) => {
   const { content }: { content: string } = req.body
   try {
     const { object } = await generateObject({
-      model: google('gemini-2.0-flash-001'),
+      model: google('gemini-2.5-pro-exp-03-25'),
       prompt: `Based on the text provided, translate it to either English or Spanish. Text is: ${content}`,
       schema: z.object({
         translation: z.string()
