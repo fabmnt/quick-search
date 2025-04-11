@@ -15,7 +15,7 @@ route.post('/stream-ai', async (req, res) => {
   const { prompt }: { prompt: string } = req.body
   try {
     const result = streamText({
-      model: google('gemini-2.0-flash-001', { useSearchGrounding: true }),
+      model: google('gemini-2.5-pro-exp-03-25', { useSearchGrounding: true }),
       prompt
     })
 

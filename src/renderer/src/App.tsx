@@ -114,7 +114,7 @@ function App(): JSX.Element {
             type='search'
             ref={searchRef}
             onKeyDown={handleKeyDown}
-            className='w-full rounded-3xl border border-neutral-500/40 bg-neutral-700 p-4 focus-within:ring-1 focus-within:ring-neutral-300 focus-within:ring-opacity-50 focus-within:ring-offset-2 focus-within:ring-offset-neutral-300 focus:outline-none'
+            className='w-full rounded-3xl border border-neutral-500/40 bg-neutral-700 p-4 focus:outline-none'
             placeholder='Search anything...'
           />
         </div>
