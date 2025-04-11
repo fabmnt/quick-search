@@ -43,15 +43,7 @@ function App(): JSX.Element {
     }
   }, [])
 
-  const streamAiTranslation = async ({
-    content,
-    from,
-    to
-  }: {
-    content: string
-    from: string
-    to: string
-  }): Promise<void> => {
+  const streamAiTranslation = async ({ content }): Promise<void> => {
     setIsStreaming(true)
     setAiResponse('')
 
@@ -61,7 +53,7 @@ function App(): JSX.Element {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ content, from, to })
+        body: JSON.stringify({ content })
       })
 
       if (!response.ok) {
@@ -149,7 +141,7 @@ function App(): JSX.Element {
         }
 
         if (searchEngine.startsWith('T')) {
-          streamAiTranslation({ content: searchTerm, from: 'english', to: 'spanish' })
+          streamAiTranslation({ content: searchTerm })
           return
         }
 

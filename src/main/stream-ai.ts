@@ -29,11 +29,11 @@ route.post('/prompt/:usePro', async (req, res) => {
 })
 
 route.post('/translate', async (req, res) => {
-  const { content, from, to }: { content: string; from: string; to: string } = req.body
+  const { content }: { content: string } = req.body
   try {
     const { object } = await generateObject({
       model: google('gemini-2.0-flash-001'),
-      prompt: `Translate the following text from ${from} to ${to}: ${content}`,
+      prompt: `Based on the text provided, translate it to either English or Spanish. Text is: ${content}`,
       schema: z.object({
         translation: z.string()
       })
