@@ -56,9 +56,8 @@ function createWindow(): void {
     show: false,
     autoHideMenuBar: true,
     title: 'Quick Search',
-    titleBarStyle: 'hidden',
     roundedCorners: true,
-    ...(process.platform === 'linux' ? { icon } : {}),
+    titleBarStyle: 'hiddenInset',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false
@@ -147,7 +146,7 @@ function createTray(): void {
     }
   ])
 
-  tray.setToolTip('Quick App')
+  tray.setToolTip('Quick Search')
   tray.setContextMenu(contextMenu)
 
   // Show app on tray icon click (Windows/Linux behavior)
