@@ -1,5 +1,5 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
-import { generateObject, streamObject, streamText } from 'ai'
+import { generateObject, streamText } from 'ai'
 import dotenv from 'dotenv'
 import { Router } from 'express'
 import { z } from 'zod'
