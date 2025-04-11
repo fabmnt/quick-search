@@ -19,10 +19,11 @@ const SEARCH_ENGINES = {
 const COMMAND_CHAR = '!'
 
 function App(): JSX.Element {
-  const searchRef = useRef<HTMLInputElement>(null)
+  const searchRef = useRef<HTMLTextAreaElement>(null)
   const [aiResponse, setAiResponse] = useState<string>('')
   const [isStreaming, setIsStreaming] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState<string>('')
 
   useEffect(() => {
     if (searchRef.current) {
@@ -41,6 +42,61 @@ function App(): JSX.Element {
       window.removeEventListener('focus', handleFocus)
     }
   }, [])
+
+  const streamAiTranslation = async ({
+    content,
+    from,
+    to
+  }: {
+    content: string
+    from: string
+    to: string
+  }): Promise<void> => {
+    setIsStreaming(true)
+    setAiResponse('')
+
+    try {
+      const response = await fetch(`http://localhost:3000/api/translate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ content, from, to })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        setError(`Error: ${errorData}`)
+        return
+      }
+
+      if (!response.body) {
+        setError('Error: Could not retrieve AI response')
+        return
+      }
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        const chunk = decoder.decode(value)
+        alert(chunk)
+        const parsedChunk = JSON.parse(chunk)
+        setAiResponse((prev) => prev + parsedChunk.translation)
+      }
+    } catch (e) {
+      if (e instanceof Error) {
+        setAiResponse(`Error: ${e.message}`)
+      } else {
+        setAiResponse('Error: Could not retrieve AI response')
+      }
+    } finally {
+      setIsStreaming(false)
+    }
+  }
 
   const streamAiResponse = async (query: string, usePro: boolean): Promise<void> => {
     setIsStreaming(true)
@@ -76,9 +132,7 @@ function App(): JSX.Element {
         if (done) break
 
         const chunk = decoder.decode(value)
-        // Normalize any groups of line breaks to prevent excessive spacing
-        const normalizedChunk = chunk.replace(/\n{3,}/g, '\n\n')
-        setAiResponse((prev) => prev + normalizedChunk)
+        setAiResponse((prev) => prev + chunk)
       }
     } catch (e) {
       if (e instanceof Error) {
@@ -91,8 +145,9 @@ function App(): JSX.Element {
     }
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
-    if (e.key === 'Enter') {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
       const searchQuery = e.currentTarget.value.trim()
       const searchQuerySplitted = searchQuery.split(' ')
       const searchEngineQuery =
@@ -107,6 +162,11 @@ function App(): JSX.Element {
         return
       }
 
+      if (searchEngine.startsWith('T')) {
+        streamAiTranslation({ content: searchTerm, from: 'english', to: 'spanish' })
+        return
+      }
+
       if (searchTerm) {
         const searchUrl = `${SEARCH_ENGINES[searchEngine]}${encodeURIComponent(searchTerm)}`
         window.open(searchUrl, '_blank')
@@ -114,16 +174,49 @@ function App(): JSX.Element {
     }
   }
 
+  const adjustTextareaHeight = (): void => {
+    if (searchRef.current) {
+      // Reset height to get proper scrollHeight
+      searchRef.current.style.height = 'auto'
+
+      // Calculate line height based on a single line (approximate method)
+      const lineHeight = parseInt(getComputedStyle(searchRef.current).lineHeight) || 20
+
+      // Limit height to 5 rows maximum
+      const maxHeight = lineHeight * 10
+
+      // Set height based on content but capped at maxHeight
+      const newHeight = Math.min(searchRef.current.scrollHeight, maxHeight)
+      searchRef.current.style.height = `${newHeight}px`
+
+      // Enable scrolling if content exceeds the max height
+      searchRef.current.style.overflowY =
+        searchRef.current.scrollHeight > maxHeight ? 'auto' : 'hidden'
+    }
+  }
+
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
+    setSearchQuery(e.target.value)
+    adjustTextareaHeight()
+  }
+
+  // Adjust height when component mounts or searchQuery changes
+  useEffect(() => {
+    adjustTextareaHeight()
+  }, [searchQuery])
+
   return (
     <div className='flex min-h-screen flex-col gap-y-4 bg-neutral-800 p-8 text-white'>
       <h1 className='text-2xl font-medium tracking-wider'>Quick Search</h1>
       <div className='w-full'>
-        <div className='w-full'>
-          <input
-            type='search'
+        <div className='w-full rounded-3xl border border-neutral-500/40 bg-neutral-700 p-4'>
+          <textarea
             ref={searchRef}
+            rows={1}
             onKeyDown={handleKeyDown}
-            className='w-full rounded-3xl border border-neutral-500/40 bg-neutral-700 p-4 placeholder:text-neutral-500 focus:outline-none'
+            onChange={handleTextareaChange}
+            value={searchQuery}
+            className='scroll-bar w-full resize-none bg-transparent placeholder:text-neutral-500 focus:outline-none'
             placeholder='Search anything...'
           />
         </div>

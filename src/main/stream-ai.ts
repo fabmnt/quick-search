@@ -1,8 +1,8 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
-import { streamText } from 'ai'
-import { Router } from 'express'
+import { streamObject, streamText } from 'ai'
 import dotenv from 'dotenv'
-
+import { Router } from 'express'
+import { z } from 'zod'
 dotenv.config()
 
 const route = Router()
@@ -24,6 +24,23 @@ route.post('/prompt/:usePro', async (req, res) => {
     })
 
     result.pipeTextStreamToResponse(res)
+  } catch (error) {
+    res.status(500).send('Error streaming AI response')
+  }
+})
+
+route.post('/translate', async (req, res) => {
+  const { content, from, to }: { content: string; from: string; to: string } = req.body
+  try {
+    const result = streamObject({
+      model: google('gemini-2.0-flash-001', { useSearchGrounding: true }),
+      prompt: `Translate the following text from ${from} to ${to}: ${content}`,
+      schema: z.object({
+        translation: z.string()
+      })
+    })
+
+    res.json(result)
   } catch (error) {
     res.status(500).send('Error streaming AI response')
   }

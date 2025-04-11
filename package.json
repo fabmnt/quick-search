@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@ai-sdk/google": "^1.2.10",
+    "@ai-sdk/react": "^1.2.8",
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^4.0.0",
     "ai": "^4.3.4",
@@ -44,8 +45,8 @@
     "@types/node": "^22.13.13",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
-    "@vitejs/plugin-react": "^4.3.4",
     "@types/react-syntax-highlighter": "^15.5.13",
+    "@vitejs/plugin-react": "^4.3.4",
     "electron": "^35.0.3",
     "electron-builder": "^25.1.8",
     "electron-vite": "^3.1.0",
