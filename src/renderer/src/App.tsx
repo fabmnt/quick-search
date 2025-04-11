@@ -171,7 +171,7 @@ function App(): JSX.Element {
       const lineHeight = parseInt(getComputedStyle(searchRef.current).lineHeight) || 20
 
       // Limit height to 5 rows maximum
-      const maxHeight = lineHeight * 10
+      const maxHeight = lineHeight * 8
 
       // Set height based on content but capped at maxHeight
       const newHeight = Math.min(searchRef.current.scrollHeight, maxHeight)
