@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Markdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
@@ -145,36 +145,39 @@ function App(): JSX.Element {
     }
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      const searchQuery = e.currentTarget.value.trim()
-      const searchQuerySplitted = searchQuery.split(' ')
-      const searchEngineQuery =
-        searchQuerySplitted.find((query) => query.startsWith(COMMAND_CHAR)) ?? `${COMMAND_CHAR}G`
-      const searchEngine = searchEngineQuery.slice(1).toUpperCase()
-      const searchTerm = searchQuery.replace(searchEngineQuery, '')
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault()
+        const searchQuery = e.currentTarget.value.trim()
+        const searchQuerySplitted = searchQuery.split(' ')
+        const searchEngineQuery =
+          searchQuerySplitted.find((query) => query.startsWith(COMMAND_CHAR)) ?? `${COMMAND_CHAR}G`
+        const searchEngine = searchEngineQuery.slice(1).toUpperCase()
+        const searchTerm = searchQuery.replace(searchEngineQuery, '')
 
-      // Handle AI streaming for !i
-      if (searchEngine.startsWith('I')) {
-        const usePro = searchEngineQuery.slice(2).toUpperCase() === 'P'
-        streamAiResponse(searchTerm, usePro)
-        return
+        // Handle AI streaming for !i
+        if (searchEngine.startsWith('I')) {
+          const usePro = searchEngineQuery.slice(2).toUpperCase() === 'P'
+          streamAiResponse(searchTerm, usePro)
+          return
+        }
+
+        if (searchEngine.startsWith('T')) {
+          streamAiTranslation({ content: searchTerm, from: 'english', to: 'spanish' })
+          return
+        }
+
+        if (searchTerm) {
+          const searchUrl = `${SEARCH_ENGINES[searchEngine]}${encodeURIComponent(searchTerm)}`
+          window.open(searchUrl, '_blank')
+        }
       }
+    },
+    [searchRef]
+  )
 
-      if (searchEngine.startsWith('T')) {
-        streamAiTranslation({ content: searchTerm, from: 'english', to: 'spanish' })
-        return
-      }
-
-      if (searchTerm) {
-        const searchUrl = `${SEARCH_ENGINES[searchEngine]}${encodeURIComponent(searchTerm)}`
-        window.open(searchUrl, '_blank')
-      }
-    }
-  }
-
-  const adjustTextareaHeight = (): void => {
+  const adjustTextareaHeight = useCallback(() => {
     if (searchRef.current) {
       // Reset height to get proper scrollHeight
       searchRef.current.style.height = 'auto'
@@ -193,7 +196,7 @@ function App(): JSX.Element {
       searchRef.current.style.overflowY =
         searchRef.current.scrollHeight > maxHeight ? 'auto' : 'hidden'
     }
-  }
+  }, [searchRef])
 
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
     setSearchQuery(e.target.value)
