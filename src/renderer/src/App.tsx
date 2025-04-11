@@ -113,43 +113,18 @@ function App(): JSX.Element {
             type='search'
             ref={searchRef}
             onKeyDown={handleKeyDown}
-            className='w-full rounded-xl bg-neutral-700 p-4 focus-within:ring-1 focus-within:ring-neutral-300 focus-within:ring-opacity-50 focus-within:ring-offset-2 focus-within:ring-offset-neutral-300 focus:outline-none'
+            className='w-full rounded-3xl bg-neutral-700 p-4 focus-within:ring-1 focus-within:ring-neutral-300 focus-within:ring-opacity-50 focus-within:ring-offset-2 focus-within:ring-offset-neutral-300 focus:outline-none'
             placeholder='Search anything...'
           />
         </div>
       </div>
 
       {(aiResponse || isStreaming) && (
-        <div className='mt-4 w-full px-8'>
-          <div className='rounded-xl bg-neutral-700 p-4 text-white'>
+        <div className='mt-4 w-full'>
+          <div className='rounded-xl bg-neutral-900 p-4 text-white'>
             {isStreaming && !aiResponse && <div className='animate-pulse'>Thinking...</div>}
-            <div className='scroll-bar h-full max-h-64 overflow-y-auto whitespace-pre-wrap text-wrap text-sm'>
-              <Markdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  code({ className, children, ...props }) {
-                    const match = /language-(\w+)/.exec(className || '')
-                    return match ? (
-                      <SyntaxHighlighter
-                        style={vscDarkPlus}
-                        language={match[1]}
-                        PreTag='div'
-                      >
-                        {String(children).replace(/\n$/, '')}
-                      </SyntaxHighlighter>
-                    ) : (
-                      <code
-                        className={className}
-                        {...props}
-                      >
-                        {children}
-                      </code>
-                    )
-                  }
-                }}
-              >
-                {aiResponse}
-              </Markdown>
+            <div className='scroll-bar h-full max-h-60 overflow-y-auto whitespace-pre-wrap text-wrap text-sm'>
+              <Markdown remarkPlugins={[remarkGfm]}>{aiResponse}</Markdown>
             </div>
           </div>
         </div>
