@@ -1,5 +1,5 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
-import { streamObject, streamText } from 'ai'
+import { generateObject, streamObject, streamText } from 'ai'
 import dotenv from 'dotenv'
 import { Router } from 'express'
 import { z } from 'zod'
@@ -13,7 +13,6 @@ const google = createGoogleGenerativeAI({
 
 route.post('/prompt/:usePro', async (req, res) => {
   const { usePro } = req.params
-  console.log({ usePro })
   const { prompt }: { prompt: string } = req.body
   try {
     const result = streamText({
@@ -31,16 +30,17 @@ route.post('/prompt/:usePro', async (req, res) => {
 
 route.post('/translate', async (req, res) => {
   const { content, from, to }: { content: string; from: string; to: string } = req.body
+  console.log({ content, from, to })
   try {
-    const result = streamObject({
-      model: google('gemini-2.0-flash-001', { useSearchGrounding: true }),
+    const { object } = await generateObject({
+      model: google('gemini-2.0-flash-001'),
       prompt: `Translate the following text from ${from} to ${to}: ${content}`,
       schema: z.object({
         translation: z.string()
       })
     })
 
-    res.json(result)
+    res.json({ translation: object.translation })
   } catch (error) {
     res.status(500).send('Error streaming AI response')
   }

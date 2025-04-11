@@ -70,23 +70,8 @@ function App(): JSX.Element {
         return
       }
 
-      if (!response.body) {
-        setError('Error: Could not retrieve AI response')
-        return
-      }
-
-      const reader = response.body.getReader()
-      const decoder = new TextDecoder()
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        const chunk = decoder.decode(value)
-        alert(chunk)
-        const parsedChunk = JSON.parse(chunk)
-        setAiResponse((prev) => prev + parsedChunk.translation)
-      }
+      const object = await response.json()
+      setAiResponse(object.translation)
     } catch (e) {
       if (e instanceof Error) {
         setAiResponse(`Error: ${e.message}`)
@@ -227,7 +212,7 @@ function App(): JSX.Element {
 
       {(aiResponse || isStreaming) && (
         <div className='mt-4 w-full'>
-          <div className='flex flex-col gap-y-4 rounded-xl text-white'>
+          <div className='flex flex-col gap-y-2 rounded-xl text-white'>
             {!isStreaming && aiResponse && (
               <h3 className='text-lg font-medium tracking-wider'>Your response</h3>
             )}
