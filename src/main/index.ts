@@ -166,6 +166,12 @@ app.whenReady().then(() => {
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
 
+  // Set app to start at login
+  app.setLoginItemSettings({
+    openAtLogin: true,
+    openAsHidden: true // App starts minimized in the tray
+  })
+
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
   // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils

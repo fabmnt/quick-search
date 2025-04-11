@@ -16,6 +16,8 @@ const SEARCH_ENGINES = {
   P: 'https://www.perplexity.ai/search?q='
 }
 
+const COMMAND_CHAR = '!'
+
 function App(): JSX.Element {
   const searchRef = useRef<HTMLInputElement>(null)
   const [aiResponse, setAiResponse] = useState<string>('')
@@ -40,12 +42,12 @@ function App(): JSX.Element {
     }
   }, [])
 
-  const streamAiResponse = async (query: string): Promise<void> => {
+  const streamAiResponse = async (query: string, usePro: boolean): Promise<void> => {
     setIsStreaming(true)
     setAiResponse('')
 
     try {
-      const response = await fetch('http://localhost:3000/api/stream-ai', {
+      const response = await fetch(`http://localhost:3000/api/prompt/${usePro}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -94,14 +96,14 @@ function App(): JSX.Element {
       const searchQuery = e.currentTarget.value.trim()
       const searchQuerySplitted = searchQuery.split(' ')
       const searchEngineQuery =
-        searchQuerySplitted.find((query) => query.startsWith('!') && query.trim().length === 2) ??
-        '!G'
+        searchQuerySplitted.find((query) => query.startsWith(COMMAND_CHAR)) ?? `${COMMAND_CHAR}G`
       const searchEngine = searchEngineQuery.slice(1).toUpperCase()
       const searchTerm = searchQuery.replace(searchEngineQuery, '')
 
-      // Handle AI streaming for !A
-      if (searchEngine === 'A') {
-        streamAiResponse(searchTerm)
+      // Handle AI streaming for !i
+      if (searchEngine.startsWith('I')) {
+        const usePro = searchEngineQuery.slice(2).toUpperCase() === 'P'
+        streamAiResponse(searchTerm, usePro)
         return
       }
 
