@@ -131,7 +131,7 @@ function App(): JSX.Element {
         const searchEngineQuery =
           searchQuerySplitted.find((query) => query.startsWith(COMMAND_CHAR)) ?? `${COMMAND_CHAR}G`
         const searchEngine = searchEngineQuery.slice(1).toUpperCase()
-        const searchTerm = searchQuery.replace(searchEngineQuery, '')
+        const searchTerm = searchQuery.replace(searchEngineQuery, '').trim()
 
         // Handle AI streaming for !i
         if (searchEngine.startsWith('I')) {
