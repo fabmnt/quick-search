@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import Markdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import { ComponentPropsWithoutRef } from 'react'
 
 import remarkGfm from 'remark-gfm'
 
@@ -34,7 +35,7 @@ function App(): JSX.Element {
 
     window.addEventListener('focus', handleFocus)
 
-    return () => {
+    return (): void => {
       window.removeEventListener('focus', handleFocus)
     }
   }, [])
@@ -73,10 +74,16 @@ function App(): JSX.Element {
         if (done) break
 
         const chunk = decoder.decode(value)
-        setAiResponse((prev) => prev + chunk)
+        // Normalize any groups of line breaks to prevent excessive spacing
+        const normalizedChunk = chunk.replace(/\n{3,}/g, '\n\n')
+        setAiResponse((prev) => prev + normalizedChunk)
       }
-    } catch (error) {
-      setAiResponse('Error: Could not retrieve AI response')
+    } catch (e) {
+      if (e instanceof Error) {
+        setAiResponse(`Error: ${e.message}`)
+      } else {
+        setAiResponse('Error: Could not retrieve AI response')
+      }
     } finally {
       setIsStreaming(false)
     }
@@ -106,7 +113,7 @@ function App(): JSX.Element {
   }
 
   return (
-    <div className='flex h-screen flex-col gap-y-4 bg-neutral-800 p-8 text-white'>
+    <div className='flex min-h-screen flex-col gap-y-4 bg-neutral-800 p-8 text-white'>
       <h1 className='text-2xl font-medium tracking-wider'>Quick Search</h1>
       <div className='w-full'>
         <div className='w-full'>
@@ -114,7 +121,7 @@ function App(): JSX.Element {
             type='search'
             ref={searchRef}
             onKeyDown={handleKeyDown}
-            className='w-full rounded-3xl border border-neutral-500/40 bg-neutral-700 p-4 focus:outline-none'
+            className='w-full rounded-3xl border border-neutral-500/40 bg-neutral-700 p-4 placeholder:text-neutral-500 focus:outline-none'
             placeholder='Search anything...'
           />
         </div>
@@ -122,14 +129,18 @@ function App(): JSX.Element {
 
       {(aiResponse || isStreaming) && (
         <div className='mt-4 w-full'>
-          <div className='rounded-xl bg-neutral-900 p-4 text-white'>
-            {isStreaming && !aiResponse && <div className='animate-pulse'>Thinking...</div>}
-            <div className='scroll-bar h-full max-h-60 overflow-y-auto whitespace-pre-wrap text-wrap text-sm'>
+          <div className='flex flex-col gap-y-4 rounded-xl text-white'>
+            {!isStreaming && aiResponse && (
+              <h3 className='text-lg font-medium tracking-wider'>Your response</h3>
+            )}
+            {isStreaming && (
+              <div className='animate-pulse text-lg font-medium tracking-wider'>Thinking...</div>
+            )}
+            <div className='scroll-bar h-full max-h-64 max-w-none overflow-y-auto leading-relaxed'>
               <Markdown
                 remarkPlugins={[remarkGfm]}
                 components={{
-                  code(props) {
-                    const { children, className, node, ...rest } = props
+                  code({ className, children, ...props }: ComponentPropsWithoutRef<'code'>) {
                     const match = /language-(\w+)/.exec(className || '')
                     return match ? (
                       <SyntaxHighlighter
@@ -141,12 +152,15 @@ function App(): JSX.Element {
                       </SyntaxHighlighter>
                     ) : (
                       <code
-                        {...rest}
+                        {...props}
                         className={className}
                       >
                         {children}
                       </code>
                     )
+                  },
+                  p({ children }) {
+                    return <p style={{ margin: '0.5em 0', whiteSpace: 'pre-wrap' }}>{children}</p>
                   }
                 }}
               >

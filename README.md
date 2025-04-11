@@ -1,4 +1,4 @@
-# quick-go
+# quick-search
 
 An Electron application with React and TypeScript
 

@@ -1,5 +1,5 @@
 appId: com.electron.app
-productName: quick-go
+productName: quick-search
 directories:
   buildResources: build
 files:
@@ -12,7 +12,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: quick-go
+  executableName: quick-search
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
