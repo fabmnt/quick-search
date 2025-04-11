@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import Markdown from 'react-markdown'
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import remarkGfm from 'remark-gfm'
 
 const SEARCH_ENGINES = {
   G: 'https://www.google.com/search?q=',
@@ -15,10 +18,23 @@ function App(): JSX.Element {
   const searchRef = useRef<HTMLInputElement>(null)
   const [aiResponse, setAiResponse] = useState<string>('')
   const [isStreaming, setIsStreaming] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (searchRef.current) {
       searchRef.current.focus()
+    }
+
+    const handleFocus = (): void => {
+      if (searchRef.current) {
+        searchRef.current.focus()
+      }
+    }
+
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      window.removeEventListener('focus', handleFocus)
     }
   }, [])
 
@@ -37,8 +53,15 @@ function App(): JSX.Element {
         })
       })
 
+      if (!response.ok) {
+        const errorData = await response.json()
+        setError(`Error: ${errorData}`)
+        return
+      }
+
       if (!response.body) {
-        throw new Error('Response body is null')
+        setError('Error: Could not retrieve AI response')
+        return
       }
 
       const reader = response.body.getReader()
@@ -52,7 +75,6 @@ function App(): JSX.Element {
         setAiResponse((prev) => prev + chunk)
       }
     } catch (error) {
-      console.error('Error streaming AI response:', error)
       setAiResponse('Error: Could not retrieve AI response')
     } finally {
       setIsStreaming(false)
@@ -63,22 +85,14 @@ function App(): JSX.Element {
     if (e.key === 'Enter') {
       const searchQuery = e.currentTarget.value.trim()
       const searchQuerySplitted = searchQuery.split(' ')
-      let searchEngine = searchQuerySplitted[searchQuerySplitted.length - 1] ?? '!G'
-      let explicitSearchEngine = false
-      if (!searchEngine.startsWith('!')) {
-        searchEngine = 'G'
-      } else {
-        searchEngine = searchEngine.slice(1).toUpperCase()
-        explicitSearchEngine = true
-      }
-
-      let searchTerm = searchQuery
-      if (explicitSearchEngine) {
-        searchTerm = searchQuery.split(' ').slice(0, -1).join(' ')
-      }
+      const searchEngineQuery =
+        searchQuerySplitted.find((query) => query.startsWith('!') && query.trim().length === 2) ??
+        '!G'
+      const searchEngine = searchEngineQuery.slice(1).toUpperCase()
+      const searchTerm = searchQuery.replace(searchEngineQuery, '')
 
       // Handle AI streaming for !A
-      if (explicitSearchEngine && searchEngine === 'A') {
+      if (searchEngine === 'A') {
         streamAiResponse(searchTerm)
         return
       }
@@ -91,18 +105,15 @@ function App(): JSX.Element {
   }
 
   return (
-    <div
-      onClick={() => searchRef.current?.focus()}
-      className='flex h-screen flex-col items-center gap-y-4 bg-neutral-800 py-4 text-white'
-    >
-      <h1 className='text-2xl font-medium'>Quick Search</h1>
-      <div className='w-full px-8'>
+    <div className='flex h-screen flex-col gap-y-4 bg-neutral-800 p-8 text-white'>
+      <h1 className='text-2xl font-medium tracking-wider'>Quick Search</h1>
+      <div className='w-full'>
         <div className='w-full'>
           <input
             type='search'
             ref={searchRef}
             onKeyDown={handleKeyDown}
-            className='w-full rounded-xl bg-neutral-700 p-4 focus-within:ring-1 focus-within:ring-neutral-500 focus-within:ring-opacity-50 focus-within:ring-offset-2 focus-within:ring-offset-neutral-500 focus:outline-none'
+            className='w-full rounded-xl bg-neutral-700 p-4 focus-within:ring-1 focus-within:ring-neutral-300 focus-within:ring-opacity-50 focus-within:ring-offset-2 focus-within:ring-offset-neutral-300 focus:outline-none'
             placeholder='Search anything...'
           />
         </div>
@@ -112,12 +123,39 @@ function App(): JSX.Element {
         <div className='mt-4 w-full px-8'>
           <div className='rounded-xl bg-neutral-700 p-4 text-white'>
             {isStreaming && !aiResponse && <div className='animate-pulse'>Thinking...</div>}
-            <div className='scroll-bar h-full max-h-52 overflow-y-auto whitespace-pre-wrap text-sm'>
-              <Markdown>{aiResponse}</Markdown>
+            <div className='scroll-bar h-full max-h-64 overflow-y-auto whitespace-pre-wrap text-wrap text-sm'>
+              <Markdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  code({ className, children, ...props }) {
+                    const match = /language-(\w+)/.exec(className || '')
+                    return match ? (
+                      <SyntaxHighlighter
+                        style={vscDarkPlus}
+                        language={match[1]}
+                        PreTag='div'
+                      >
+                        {String(children).replace(/\n$/, '')}
+                      </SyntaxHighlighter>
+                    ) : (
+                      <code
+                        className={className}
+                        {...props}
+                      >
+                        {children}
+                      </code>
+                    )
+                  }
+                }}
+              >
+                {aiResponse}
+              </Markdown>
             </div>
           </div>
         </div>
       )}
+
+      {error && <div className='text-red-500'>{error}</div>}
     </div>
   )
 }

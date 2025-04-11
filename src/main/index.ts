@@ -55,6 +55,9 @@ function createWindow(): void {
     resizable: false,
     show: false,
     autoHideMenuBar: true,
+    title: 'Quick Search',
+    titleBarStyle: 'hidden',
+    roundedCorners: true,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -89,7 +92,7 @@ function createWindow(): void {
   })
 
   // Register global shortcut to show and focus the app
-  globalShortcut.register('CommandOrControl+Space+K', () => {
+  globalShortcut.register('Alt+L', () => {
     if (mainWindow) {
       if (!mainWindow.isVisible()) {
         mainWindow.show()
@@ -102,7 +105,7 @@ function createWindow(): void {
 
   // Unregister the shortcut when the window is closed
   mainWindow.on('closed', () => {
-    globalShortcut.unregister('CommandOrControl+Space+K')
+    globalShortcut.unregister('Alt+L')
     mainWindow = null
   })
 
@@ -198,7 +201,7 @@ app.on('window-all-closed', () => {
 
 // Unregister all shortcuts when the app is about to quit
 app.on('will-quit', () => {
-  globalShortcut.unregisterAll()
+  globalShortcut.unregister('Alt+L')
 })
 
 // In this file you can include the rest of your app's specific main process

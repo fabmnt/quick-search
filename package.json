@@ -1,10 +1,10 @@
 {
-  "name": "quick-go",
+  "name": "quick-search",
   "version": "1.0.0",
   "description": "An Electron application with React and TypeScript",
   "main": "./out/main/index.js",
-  "author": "example.com",
-  "homepage": "https://electron-vite.org",
+  "author": "fabianmontoya.dev",
+  "homepage": "https://fabianmontoya.dev",
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint --cache .",
@@ -31,6 +31,8 @@
     "express": "^5.1.0",
     "postcss": "^8.5.3",
     "react-markdown": "^10.1.0",
+    "react-syntax-highlighter": "^15.6.1",
+    "remark-gfm": "^4.0.1",
     "zod": "^3.24.2"
   },
   "devDependencies": {
@@ -43,6 +45,7 @@
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",
+    "@types/react-syntax-highlighter": "^15.5.13",
     "electron": "^35.0.3",
     "electron-builder": "^25.1.8",
     "electron-vite": "^3.1.0",

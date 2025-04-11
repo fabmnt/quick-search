@@ -1,4 +1,4 @@
-import { google } from '@ai-sdk/google'
+import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { streamText } from 'ai'
 import { Router } from 'express'
 import dotenv from 'dotenv'
@@ -6,6 +6,10 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 const route = Router()
+
+const google = createGoogleGenerativeAI({
+  apiKey: import.meta.env.MAIN_VITE_GOOGLE_GENERATIVE_AI_API_KEY
+})
 
 route.post('/stream-ai', async (req, res) => {
   const { prompt }: { prompt: string } = req.body
