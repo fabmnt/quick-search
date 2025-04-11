@@ -30,7 +30,6 @@ route.post('/prompt/:usePro', async (req, res) => {
 
 route.post('/translate', async (req, res) => {
   const { content, from, to }: { content: string; from: string; to: string } = req.body
-  console.log({ content, from, to })
   try {
     const { object } = await generateObject({
       model: google('gemini-2.0-flash-001'),
