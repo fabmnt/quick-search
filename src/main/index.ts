@@ -15,10 +15,16 @@ interface AppWithIsQuitting extends App {
 const appWithQuitting = app as AppWithIsQuitting
 appWithQuitting.isQuitting = false
 
+// Set app to start at login
+app.setLoginItemSettings({
+  openAtLogin: true,
+  openAsHidden: true // App starts minimized in the tray
+})
+
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 let expressApp: express.Express | null = null
-const PORT = 3000
+const PORT = 3131
 
 // Create Express server
 function createExpressServer(): void {
@@ -57,7 +63,6 @@ function createWindow(): void {
     autoHideMenuBar: true,
     title: 'Quick Search',
     roundedCorners: true,
-    titleBarStyle: 'hidden',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false
@@ -164,12 +169,6 @@ function createTray(): void {
 app.whenReady().then(() => {
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
-
-  // Set app to start at login
-  app.setLoginItemSettings({
-    openAtLogin: true,
-    openAsHidden: true // App starts minimized in the tray
-  })
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.

@@ -48,7 +48,7 @@ function App(): JSX.Element {
     setAiResponse('')
 
     try {
-      const response = await fetch(`http://localhost:3000/api/translate`, {
+      const response = await fetch(`http://localhost:3131/api/translate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -80,7 +80,7 @@ function App(): JSX.Element {
     setAiResponse('')
 
     try {
-      const response = await fetch(`http://localhost:3000/api/prompt/${usePro}`, {
+      const response = await fetch(`http://localhost:3131/api/prompt/${usePro}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -211,7 +211,7 @@ function App(): JSX.Element {
             {isStreaming && (
               <div className='animate-pulse text-lg font-medium tracking-wider'>Thinking...</div>
             )}
-            <div className='scroll-bar h-full max-h-64 max-w-none overflow-y-auto leading-relaxed'>
+            <div className='scroll-bar h-full max-h-60 max-w-none overflow-y-auto leading-relaxed'>
               <Markdown
                 remarkPlugins={[remarkGfm]}
                 components={{
