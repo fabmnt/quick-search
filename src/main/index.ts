@@ -15,12 +15,6 @@ interface AppWithIsQuitting extends App {
 const appWithQuitting = app as AppWithIsQuitting
 appWithQuitting.isQuitting = false
 
-// Set app to start at login
-app.setLoginItemSettings({
-  openAtLogin: true,
-  openAsHidden: true // App starts minimized in the tray
-})
-
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 let expressApp: express.Express | null = null
