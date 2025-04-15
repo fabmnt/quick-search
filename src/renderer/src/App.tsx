@@ -16,10 +16,6 @@ import '@fontsource/geist-sans/600.css';
 
 const SEARCH_ENGINES = {
   G: 'https://www.google.com/search?q=',
-  D: 'https://www.duckduckgo.com/?q=',
-  B: 'https://www.bing.com/search?q=',
-  A: 'https://www.ask.com/web?q=',
-  Y: 'https://www.yahoo.com/search?p=',
   C: 'https://chat.openai.com/?q=',
   P: 'https://www.perplexity.ai/search?q='
 }
