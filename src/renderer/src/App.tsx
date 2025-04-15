@@ -20,7 +20,39 @@ const SEARCH_ENGINES = {
   P: 'https://www.perplexity.ai/search?q='
 }
 
+const ENGINE_LABELS = {
+  I: "AI",
+  T: "Translation",
+  G: "Google",
+  C: "Chat",
+  P: "Perplexity"
+}
+
+const MODIFIER_LABELS = {
+  '+': "Pro",
+}
+
 const COMMAND_CHAR = '!'
+
+function SearchEngineBadge({ engine }: { engine: string }) {
+
+  return (
+    <span className='text-xs inline-flex px-2 text-zinc-300 font-medium py-1 border-zinc-500 border rounded-lg'>
+      {ENGINE_LABELS[engine] ?? 'Google'}
+    </span>
+  )
+}
+
+function ModifierBadge({ modifier }: { modifier: string }) {
+  const label = MODIFIER_LABELS[modifier]
+  if (!label) return null
+
+  return (
+    <span className='text-xs inline-flex px-2 text-zinc-300 font-medium py-1 border-zinc-500 border rounded-lg'>
+      {label}
+    </span>
+  )
+}
 
 function App(): JSX.Element {
   const searchRef = useRef<HTMLTextAreaElement>(null)
@@ -30,9 +62,13 @@ function App(): JSX.Element {
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [responseTitle, setResponseTitle] = useState<string>('')
   const [isTitleLoading, setIsTitleLoading] = useState<boolean>(false)
-  const [searchEngine, setSearchEngine] = useState<string>('G')
   const aiAbortControllerRef = useRef<AbortController | null>(null)
   const currentRequestIdRef = useRef(0)
+  const searchQuerySplitted = searchQuery.split(' ')
+  const searchEngineQuery =
+    searchQuerySplitted.find((query) => query.startsWith(COMMAND_CHAR))?.trim()
+  const engine = searchEngineQuery?.substring(1, 2).toUpperCase() || 'G'
+  const modifier = searchEngineQuery?.substring(2, 3) ?? ''
 
   useEffect(() => {
     if (!isStreaming && aiResponse) {
@@ -214,14 +250,12 @@ function App(): JSX.Element {
         const searchQuery = e.currentTarget.value.trim()
         const searchQuerySplitted = searchQuery.split(' ')
         const searchEngineQuery =
-          searchQuerySplitted.find((query) => query.startsWith(COMMAND_CHAR)) ?? `${COMMAND_CHAR}${searchEngine}`
-        const engine = searchEngineQuery.slice(1).toUpperCase()
-        setSearchEngine(engine)
+          searchQuerySplitted.find((query) => query.startsWith(COMMAND_CHAR)) ?? `${COMMAND_CHAR}${engine}`
         const searchTerm = searchQuery.replace(searchEngineQuery, '').trim()
 
         // Handle AI streaming for !i
         if (engine.startsWith('I')) {
-          const usePro = searchEngineQuery.slice(2).trim() === '+'
+          const usePro = modifier === '+'
           setResponseTitle('')
           streamAiResponse(searchTerm, usePro)
           return
@@ -239,7 +273,7 @@ function App(): JSX.Element {
         }
       }
     },
-    [searchRef, searchEngine]
+    [searchRef, engine, modifier]
   )
 
   const adjustTextareaHeight = useCallback(() => {
@@ -279,7 +313,7 @@ function App(): JSX.Element {
       className='flex min-h-screen flex-col gap-y-4 bg-zinc-800 px-8 text-white'
     >
       <div className='w-full sticky top-0 z-10 bg-zinc-800 py-2'>
-        <div className='w-full rounded-3xl border border-neutral-500/40 bg-zinc-700 p-4'>
+        <div className='w-full rounded-3xl border border-neutral-500/40 bg-zinc-700 relative p-4'>
           <textarea
             ref={searchRef}
             rows={1}
@@ -289,6 +323,10 @@ function App(): JSX.Element {
             className='scroll-bar p-2 w-full resize-none bg-transparent placeholder:text-zinc-500 focus:outline-none'
             placeholder='Make a quick search!'
           />
+          <div className='flex gap-2 items-center'>
+            <SearchEngineBadge engine={engine} />
+            {modifier && <ModifierBadge modifier={modifier} />}
+          </div>
         </div>
       </div>
 
