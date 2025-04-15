@@ -288,7 +288,7 @@ function App(): JSX.Element {
             onKeyDown={handleKeyDown}
             onChange={handleTextareaChange}
             value={searchQuery}
-            className='scroll-bar w-full resize-none bg-transparent placeholder:text-neutral-500 focus:outline-none'
+            className='scroll-bar p-2 w-full resize-none bg-transparent placeholder:text-neutral-500 focus:outline-none'
             placeholder='Make a quick search!'
           />
         </div>
@@ -307,7 +307,7 @@ function App(): JSX.Element {
               {isStreaming && (
                 <div className='animate-pulse text-lg font-medium'>Thinking...</div>
               )}
-              <div className='text-neutral-300 scroll-bar flex flex-col gap-y-4 flex-1 min-h-0 max-w-none overflow-y-auto leading-relaxed'>
+              <div className='text-neutral-300 scroll-bar flex flex-col gap-y-6 flex-1 min-h-0 max-w-none overflow-y-auto leading-relaxed'>
                 <Markdown
                   remarkPlugins={[remarkGfm, remarkBreaks]}
                   components={{
@@ -330,7 +330,14 @@ function App(): JSX.Element {
                       )
                     },
                     li({ children, ...props }) {
-                      return <li className='mb-4' {...props}>{children}</li>
+                      return <li className='mb-2' {...props}>{children}</li>
+                    },
+                    strong({ children, ...props }) {
+                      return (
+                        <strong className='text-white font-medium' {...props}>
+                          {children}
+                        </strong>
+                      )
                     }
                   }}
                 >
