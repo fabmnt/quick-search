@@ -310,7 +310,7 @@ function App(): JSX.Element {
   return (
     <div
       style={{ fontFamily: 'Geist Sans, sans-serif' }}
-      className='flex min-h-screen flex-col gap-y-4 bg-zinc-800 px-8 text-white'
+      className='flex min-h-screen flex-col gap-y-4 px-8 text-white'
     >
       <div className='w-full sticky top-0 z-10 bg-zinc-800 py-2'>
         <div className='w-full rounded-3xl border border-neutral-500/40 bg-zinc-700 relative p-4'>
