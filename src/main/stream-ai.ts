@@ -11,8 +11,25 @@ const google = createGoogleGenerativeAI({
   apiKey: import.meta.env.MAIN_VITE_GOOGLE_GENERATIVE_AI_API_KEY
 })
 
-route.post('/prompt/:usePro', async (req, res) => {
-  const { usePro } = req.params
+route.post('/prompt/title', async (req, res) => {
+  const { prompt }: { prompt: string } = req.body
+  try {
+    const result = await generateObject({
+      model: google('gemini-2.0-flash-001'),
+      prompt: `Resume the following content in a short title: ${prompt.substring(0, 300)}`,
+      schema: z.object({
+        title: z.string().describe('A short and relevant title from the content provided')
+      })
+    })
+
+    res.json({ title: result.object.title })
+  } catch (error) {
+    res.status(500).send('Error streaming AI response')
+  }
+})
+
+route.post('/prompt/', async (req, res) => {
+  const { usePro } = req.query
   const { prompt }: { prompt: string } = req.body
   try {
     const result = streamText({

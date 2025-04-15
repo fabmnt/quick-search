@@ -5,6 +5,14 @@ import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { ComponentPropsWithoutRef } from 'react'
 
 import remarkGfm from 'remark-gfm'
+import remarkBreaks from 'remark-breaks'
+
+import '@fontsource/geist-sans/100.css';
+import '@fontsource/geist-sans/200.css';
+import '@fontsource/geist-sans/300.css';
+import '@fontsource/geist-sans/400.css';
+import '@fontsource/geist-sans/500.css';
+import '@fontsource/geist-sans/600.css';
 
 const SEARCH_ENGINES = {
   G: 'https://www.google.com/search?q=',
@@ -24,6 +32,38 @@ function App(): JSX.Element {
   const [isStreaming, setIsStreaming] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState<string>('')
+  const [responseTitle, setResponseTitle] = useState<string>('')
+  const [isTitleLoading, setIsTitleLoading] = useState<boolean>(false)
+  const aiAbortControllerRef = useRef<AbortController | null>(null)
+  const currentRequestIdRef = useRef(0)
+
+  useEffect(() => {
+    if (!isStreaming && aiResponse) {
+      setIsTitleLoading(true)
+      fetch(`http://localhost:3131/api/prompt/title`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ prompt: aiResponse })
+      })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Failed to generate title')
+        }
+        return response.json() 
+      })
+      .then((data) => {
+        setResponseTitle(data.title)
+      })
+      .catch((error) => {
+        setError(error.message)
+      })
+      .finally(() => {
+        setIsTitleLoading(false)
+      })
+    }
+  }, [isStreaming, aiResponse])
 
   useEffect(() => {
     if (searchRef.current) {
@@ -43,7 +83,34 @@ function App(): JSX.Element {
     }
   }, [])
 
+  useEffect(() => {
+    const handleCtrlN = (e: KeyboardEvent) => {
+      if (e.ctrlKey && (e.key === 'n' || e.key === 'N')) {
+        e.preventDefault()
+        setSearchQuery('')
+        setAiResponse('')
+        setIsStreaming(false)
+        setError(null)
+        setResponseTitle('')
+        if (searchRef.current) {
+          searchRef.current.focus()
+        }
+      }
+    }
+    window.addEventListener('keydown', handleCtrlN)
+    return () => {
+      window.removeEventListener('keydown', handleCtrlN)
+    }
+  }, [])
+
   const streamAiTranslation = async ({ content }): Promise<void> => {
+    // Cancel any ongoing AI fetch (response or translation)
+    if (aiAbortControllerRef.current) {
+      aiAbortControllerRef.current.abort()
+    }
+    const abortController = new AbortController()
+    aiAbortControllerRef.current = abortController
+    const requestId = ++currentRequestIdRef.current
     setIsStreaming(true)
     setAiResponse('')
 
@@ -53,7 +120,8 @@ function App(): JSX.Element {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ content })
+        body: JSON.stringify({ content }),
+        signal: abortController.signal
       })
 
       if (!response.ok) {
@@ -65,29 +133,44 @@ function App(): JSX.Element {
       const object = await response.json()
       setAiResponse(object.translation)
     } catch (e) {
-      if (e instanceof Error) {
+      if (e instanceof DOMException && e.name === 'AbortError') {
+        setAiResponse('') // Optionally clear or show cancelled message
+      } else if (e instanceof Error) {
         setAiResponse(`Error: ${e.message}`)
       } else {
         setAiResponse('Error: Could not retrieve AI response')
       }
     } finally {
-      setIsStreaming(false)
+      aiAbortControllerRef.current = null
+      if (requestId === currentRequestIdRef.current) {
+        setIsStreaming(false)
+      }
     }
   }
 
   const streamAiResponse = async (query: string, usePro: boolean): Promise<void> => {
+    // Cancel any ongoing AI fetch
+    if (aiAbortControllerRef.current) {
+      aiAbortControllerRef.current.abort()
+    }
+    const abortController = new AbortController()
+    aiAbortControllerRef.current = abortController
+    const requestId = ++currentRequestIdRef.current
     setIsStreaming(true)
     setAiResponse('')
 
+    const useProParam = usePro ? 'true' : 'false'
+
     try {
-      const response = await fetch(`http://localhost:3131/api/prompt/${usePro}`, {
+      const response = await fetch(`http://localhost:3131/api/prompt?usePro=${useProParam}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           prompt: query
-        })
+        }),
+        signal: abortController.signal
       })
 
       if (!response.ok) {
@@ -112,13 +195,18 @@ function App(): JSX.Element {
         setAiResponse((prev) => prev + chunk)
       }
     } catch (e) {
-      if (e instanceof Error) {
+      if (e instanceof DOMException && e.name === 'AbortError') {
+        setAiResponse('') // Optionally clear or show cancelled message
+      } else if (e instanceof Error) {
         setAiResponse(`Error: ${e.message}`)
       } else {
         setAiResponse('Error: Could not retrieve AI response')
       }
     } finally {
-      setIsStreaming(false)
+      aiAbortControllerRef.current = null
+      if (requestId === currentRequestIdRef.current) {
+        setIsStreaming(false)
+      }
     }
   }
 
@@ -135,12 +223,14 @@ function App(): JSX.Element {
 
         // Handle AI streaming for !i
         if (searchEngine.startsWith('I')) {
-          const usePro = searchEngineQuery.slice(2).toUpperCase() === 'P'
+          const usePro = searchEngineQuery.slice(2).trim() === '+'
+          setResponseTitle('')
           streamAiResponse(searchTerm, usePro)
           return
         }
 
         if (searchEngine.startsWith('T')) {
+          setResponseTitle('')
           streamAiTranslation({ content: searchTerm })
           return
         }
@@ -175,10 +265,10 @@ function App(): JSX.Element {
     }
   }, [searchRef])
 
-  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
+  const handleTextareaChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>): void => {
     setSearchQuery(e.target.value)
     adjustTextareaHeight()
-  }
+  }, [adjustTextareaHeight])
 
   // Adjust height when component mounts or searchQuery changes
   useEffect(() => {
@@ -186,9 +276,11 @@ function App(): JSX.Element {
   }, [searchQuery])
 
   return (
-    <div className='flex min-h-screen flex-col gap-y-4 bg-neutral-800 p-8 text-white'>
-      <h1 className='text-2xl font-medium tracking-wider'>Quick Search</h1>
-      <div className='w-full'>
+    <div
+      style={{ fontFamily: 'Geist Sans, sans-serif' }}
+      className='flex min-h-screen flex-col gap-y-4 bg-neutral-800 px-8 text-white'
+    >
+      <div className='w-full sticky top-0 z-10 bg-neutral-800 py-2'>
         <div className='w-full rounded-3xl border border-neutral-500/40 bg-neutral-700 p-4'>
           <textarea
             ref={searchRef}
@@ -197,54 +289,58 @@ function App(): JSX.Element {
             onChange={handleTextareaChange}
             value={searchQuery}
             className='scroll-bar w-full resize-none bg-transparent placeholder:text-neutral-500 focus:outline-none'
-            placeholder='Search anything...'
+            placeholder='Make a quick search!'
           />
         </div>
       </div>
 
-      {(aiResponse || isStreaming) && (
-        <div className='mt-4 w-full'>
-          <div className='flex flex-col gap-y-2 rounded-xl text-white'>
-            {!isStreaming && aiResponse && (
-              <h3 className='text-lg font-medium tracking-wider'>Your response</h3>
-            )}
-            {isStreaming && (
-              <div className='animate-pulse text-lg font-medium tracking-wider'>Thinking...</div>
-            )}
-            <div className='scroll-bar h-full max-h-60 max-w-none overflow-y-auto leading-relaxed'>
-              <Markdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  code({ className, children, ...props }: ComponentPropsWithoutRef<'code'>) {
-                    const match = /language-(\w+)/.exec(className || '')
-                    return match ? (
-                      <SyntaxHighlighter
-                        style={atomDark}
-                        language={match[1]}
-                        PreTag='div'
-                      >
-                        {String(children).replace(/\n$/, '')}
-                      </SyntaxHighlighter>
-                    ) : (
-                      <code
-                        {...props}
-                        className={className}
-                      >
-                        {children}
-                      </code>
-                    )
-                  },
-                  p({ children }) {
-                    return <p style={{ margin: '0.5em 0', whiteSpace: 'pre-wrap' }}>{children}</p>
-                  }
-                }}
-              >
-                {aiResponse}
-              </Markdown>
+      <div className='flex flex-1 min-h-0'>
+        {(aiResponse || isStreaming) && (
+          <div className='mt-4 w-full flex flex-col flex-1 min-h-0 pb-4'>
+            <div className='flex flex-col gap-y-6 rounded-xl text-white flex-1 min-h-0'>
+              {isTitleLoading && (
+                <div className='text-lg text-center font-medium animate-pulse'>Creating title...</div>
+              )}
+              {responseTitle && !isTitleLoading && (
+                <h2 className='text-lg text-center font-medium'>{responseTitle}</h2>
+              )}
+              {isStreaming && (
+                <div className='animate-pulse text-lg font-medium'>Thinking...</div>
+              )}
+              <div className='text-neutral-300 scroll-bar flex flex-col gap-y-4 flex-1 min-h-0 max-w-none overflow-y-auto leading-relaxed'>
+                <Markdown
+                  remarkPlugins={[remarkGfm, remarkBreaks]}
+                  components={{
+                    code({ className, children, ...props }: ComponentPropsWithoutRef<'code'>) {
+                      const match = /language-(\w+)/.exec(className || '')
+                      return match ? (
+                        <SyntaxHighlighter
+                          style={atomDark}
+                          language={match[1]}
+                          PreTag='div'
+                          children={String(children).replace(/\n$/, '')}
+                        />
+                      ) : (
+                        <code
+                          {...props}
+                          className={className}
+                        >
+                          {children}
+                        </code>
+                      )
+                    },
+                    li({ children, ...props }) {
+                      return <li className='mb-4' {...props}>{children}</li>
+                    }
+                  }}
+                >
+                  {aiResponse}
+                </Markdown>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {error && <div className='text-red-500'>{error}</div>}
     </div>
