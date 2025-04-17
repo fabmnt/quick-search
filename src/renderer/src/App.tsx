@@ -25,7 +25,8 @@ const ENGINE_LABELS = {
   T: 'Translation',
   G: 'Google',
   C: 'Chat',
-  P: 'Perplexity'
+  P: 'Perplexity',
+  U: 'URL'
 }
 
 const MODIFIER_LABELS = {
@@ -76,8 +77,11 @@ function App(): JSX.Element {
   const searchEngineQuery = searchQuerySplitted
     .find((query) => query.startsWith(COMMAND_CHAR))
     ?.trim()
-  const engine = searchEngineQuery?.substring(1, 2).toUpperCase() || 'G'
+  let engine = searchEngineQuery?.substring(1, 2).toUpperCase() || 'G'
   const modifier = searchEngineQuery?.substring(2, 3) ?? ''
+  if (isValidUrl(searchQuery)) {
+    engine = 'U'
+  }
 
   useEffect(() => {
     if (!isStreaming && aiResponse) {
@@ -263,7 +267,7 @@ function App(): JSX.Element {
           `${COMMAND_CHAR}${engine}`
         const searchTerm = searchQuery.replace(searchEngineQuery, '').trim()
 
-        if (isValidUrl(searchTerm)) {
+        if (engine.startsWith('U')) {
           window.open(searchTerm, '_blank')
           return
         }
