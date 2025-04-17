@@ -7,12 +7,12 @@ import { ComponentPropsWithoutRef } from 'react'
 import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
 
-import '@fontsource/geist-sans/100.css';
-import '@fontsource/geist-sans/200.css';
-import '@fontsource/geist-sans/300.css';
-import '@fontsource/geist-sans/400.css';
-import '@fontsource/geist-sans/500.css';
-import '@fontsource/geist-sans/600.css';
+import '@fontsource/geist-sans/100.css'
+import '@fontsource/geist-sans/200.css'
+import '@fontsource/geist-sans/300.css'
+import '@fontsource/geist-sans/400.css'
+import '@fontsource/geist-sans/500.css'
+import '@fontsource/geist-sans/600.css'
 
 const SEARCH_ENGINES = {
   G: 'https://www.google.com/search?q=',
@@ -21,23 +21,31 @@ const SEARCH_ENGINES = {
 }
 
 const ENGINE_LABELS = {
-  I: "AI",
-  T: "Translation",
-  G: "Google",
-  C: "Chat",
-  P: "Perplexity"
+  I: 'AI',
+  T: 'Translation',
+  G: 'Google',
+  C: 'Chat',
+  P: 'Perplexity'
 }
 
 const MODIFIER_LABELS = {
-  '+': "Pro",
+  '+': 'Pro'
 }
 
 const COMMAND_CHAR = '!'
 
-function SearchEngineBadge({ engine }: { engine: string }) {
+function isValidUrl(url: string): boolean {
+  try {
+    const newUrl = new URL(url)
+    return newUrl.protocol === 'http:' || newUrl.protocol === 'https:'
+  } catch (_) {
+    return false
+  }
+}
 
+function SearchEngineBadge({ engine }: { engine: string }) {
   return (
-    <span className='text-xs inline-flex px-2 text-zinc-300 font-medium py-1 border-zinc-500 border rounded-lg'>
+    <span className='inline-flex rounded-lg border border-zinc-500 px-2 py-1 text-xs font-medium text-zinc-300'>
       {ENGINE_LABELS[engine] ?? 'Google'}
     </span>
   )
@@ -48,7 +56,7 @@ function ModifierBadge({ modifier }: { modifier: string }) {
   if (!label) return null
 
   return (
-    <span className='text-xs inline-flex px-2 text-zinc-300 font-medium py-1 border-zinc-500 border rounded-lg'>
+    <span className='inline-flex rounded-lg border border-zinc-500 px-2 py-1 text-xs font-medium text-zinc-300'>
       {label}
     </span>
   )
@@ -65,8 +73,9 @@ function App(): JSX.Element {
   const aiAbortControllerRef = useRef<AbortController | null>(null)
   const currentRequestIdRef = useRef(0)
   const searchQuerySplitted = searchQuery.split(' ')
-  const searchEngineQuery =
-    searchQuerySplitted.find((query) => query.startsWith(COMMAND_CHAR))?.trim()
+  const searchEngineQuery = searchQuerySplitted
+    .find((query) => query.startsWith(COMMAND_CHAR))
+    ?.trim()
   const engine = searchEngineQuery?.substring(1, 2).toUpperCase() || 'G'
   const modifier = searchEngineQuery?.substring(2, 3) ?? ''
 
@@ -80,21 +89,21 @@ function App(): JSX.Element {
         },
         body: JSON.stringify({ prompt: aiResponse })
       })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error('Failed to generate title')
-        }
-        return response.json() 
-      })
-      .then((data) => {
-        setResponseTitle(data.title)
-      })
-      .catch((error) => {
-        setError(error.message)
-      })
-      .finally(() => {
-        setIsTitleLoading(false)
-      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error('Failed to generate title')
+          }
+          return response.json()
+        })
+        .then((data) => {
+          setResponseTitle(data.title)
+        })
+        .catch((error) => {
+          setError(error.message)
+        })
+        .finally(() => {
+          setIsTitleLoading(false)
+        })
     }
   }, [isStreaming, aiResponse])
 
@@ -245,13 +254,19 @@ function App(): JSX.Element {
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
-      if (e.key === 'Enter' && !e.shiftKey) {
+      if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault()
         const searchQuery = e.currentTarget.value.trim()
         const searchQuerySplitted = searchQuery.split(' ')
         const searchEngineQuery =
-          searchQuerySplitted.find((query) => query.startsWith(COMMAND_CHAR)) ?? `${COMMAND_CHAR}${engine}`
+          searchQuerySplitted.find((query) => query.startsWith(COMMAND_CHAR)) ??
+          `${COMMAND_CHAR}${engine}`
         const searchTerm = searchQuery.replace(searchEngineQuery, '').trim()
+
+        if (isValidUrl(searchTerm)) {
+          window.open(searchTerm, '_blank')
+          return
+        }
 
         // Handle AI streaming for !i
         if (engine.startsWith('I')) {
@@ -297,10 +312,13 @@ function App(): JSX.Element {
     }
   }, [searchRef])
 
-  const handleTextareaChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>): void => {
-    setSearchQuery(e.target.value)
-    adjustTextareaHeight()
-  }, [adjustTextareaHeight])
+  const handleTextareaChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
+      setSearchQuery(e.target.value)
+      adjustTextareaHeight()
+    },
+    [adjustTextareaHeight]
+  )
 
   // Adjust height when component mounts or searchQuery changes
   useEffect(() => {
@@ -312,38 +330,38 @@ function App(): JSX.Element {
       style={{ fontFamily: 'Geist Sans, sans-serif' }}
       className='flex min-h-screen flex-col gap-y-4 px-8 text-white'
     >
-      <div className='w-full sticky top-0 z-10 bg-zinc-800 py-2'>
-        <div className='w-full rounded-3xl border border-neutral-500/40 bg-zinc-700 relative p-4'>
+      <div className='sticky top-0 z-10 w-full bg-zinc-800 py-2'>
+        <div className='relative w-full rounded-3xl border border-neutral-500/40 bg-zinc-700 p-4'>
           <textarea
             ref={searchRef}
             rows={1}
             onKeyDown={handleKeyDown}
             onChange={handleTextareaChange}
             value={searchQuery}
-            className='scroll-bar p-2 w-full resize-none bg-transparent placeholder:text-zinc-500 focus:outline-none'
+            className='scroll-bar w-full resize-none bg-transparent p-2 placeholder:text-zinc-500 focus:outline-none'
             placeholder='Make a quick search!'
           />
-          <div className='flex gap-2 items-center'>
+          <div className='flex items-center gap-2'>
             <SearchEngineBadge engine={engine} />
             {modifier && <ModifierBadge modifier={modifier} />}
           </div>
         </div>
       </div>
 
-      <div className='flex flex-1 min-h-0'>
+      <div className='flex min-h-0 flex-1'>
         {(aiResponse || isStreaming) && (
-          <div className='mt-4 w-full flex flex-col flex-1 min-h-0 pb-4'>
-            <div className='flex flex-col gap-y-6 rounded-xl text-white flex-1 min-h-0'>
+          <div className='mt-4 flex min-h-0 w-full flex-1 flex-col pb-4'>
+            <div className='flex min-h-0 flex-1 flex-col gap-y-6 rounded-xl text-white'>
               {isTitleLoading && (
-                <div className='text-lg text-center font-medium animate-pulse'>Creating title...</div>
+                <div className='animate-pulse text-center text-lg font-medium'>
+                  Creating title...
+                </div>
               )}
               {responseTitle && !isTitleLoading && (
-                <h2 className='text-lg text-center font-medium'>{responseTitle}</h2>
+                <h2 className='text-center text-lg font-medium'>{responseTitle}</h2>
               )}
-              {isStreaming && (
-                <div className='animate-pulse text-lg font-medium'>Thinking...</div>
-              )}
-              <div className='text-zinc-300 scroll-bar flex flex-col gap-y-6 flex-1 min-h-0 max-w-none overflow-y-auto leading-relaxed'>
+              {isStreaming && <div className='animate-pulse text-lg font-medium'>Thinking...</div>}
+              <div className='scroll-bar flex min-h-0 max-w-none flex-1 flex-col gap-y-6 overflow-y-auto leading-relaxed text-zinc-300'>
                 <Markdown
                   remarkPlugins={[remarkGfm, remarkBreaks]}
                   components={{
@@ -366,11 +384,21 @@ function App(): JSX.Element {
                       )
                     },
                     li({ children, ...props }) {
-                      return <li className='mb-2' {...props}>{children}</li>
+                      return (
+                        <li
+                          className='mb-2'
+                          {...props}
+                        >
+                          {children}
+                        </li>
+                      )
                     },
                     strong({ children, ...props }) {
                       return (
-                        <strong className='text-white font-semibold' {...props}>
+                        <strong
+                          className='font-semibold text-white'
+                          {...props}
+                        >
                           {children}
                         </strong>
                       )
