@@ -63,9 +63,6 @@ function App(): JSX.Element {
         </button>
       </div>
       <div className='flex min-h-0 flex-1'>
-        {status === 'streaming' && (
-          <div className='animate-pulse text-lg font-medium'>Thinking...</div>
-        )}
         {messages.length > 0 && (
           <div className='mt-4 flex min-h-0 w-full flex-1 flex-col pb-4'>
             <div className='flex min-h-0 flex-1 flex-col gap-y-6 rounded-xl text-white'>
@@ -126,6 +123,9 @@ function App(): JSX.Element {
                     </Markdown>
                   </div>
                 ))}
+                {(status === 'streaming' || status === 'submitted') && (
+                  <div className='animate-pulse text-lg font-medium'>Thinking...</div>
+                )}
               </div>
             </div>
           </div>
