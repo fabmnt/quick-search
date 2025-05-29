@@ -24,6 +24,7 @@ route.post('/prompt/title', async (req, res) => {
 
     res.json({ title: result.object.title })
   } catch (error) {
+    console.error(error)
     res.status(500).send('Error streaming AI response')
   }
 })
@@ -41,6 +42,7 @@ route.post('/prompt/', async (req, res) => {
 
     result.pipeTextStreamToResponse(res)
   } catch (error) {
+    console.error(error)
     res.status(500).send('Error streaming AI response')
   }
 })
@@ -58,6 +60,7 @@ route.post('/translate', async (req, res) => {
 
     res.json({ translation: object.translation })
   } catch (error) {
+    console.error(error)
     res.status(500).send('Error streaming AI response')
   }
 })

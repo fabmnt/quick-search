@@ -39,7 +39,8 @@ function isValidUrl(url: string): boolean {
   try {
     const newUrl = new URL(url)
     return newUrl.protocol === 'http:' || newUrl.protocol === 'https:'
-  } catch (_) {
+  } catch (error) {
+    console.error(error)
     return false
   }
 }
@@ -130,7 +131,7 @@ function App(): JSX.Element {
   }, [])
 
   useEffect(() => {
-    const handleCtrlN = (e: KeyboardEvent) => {
+    const handleCtrlN = (e: KeyboardEvent): void => {
       if (e.ctrlKey && (e.key === 'n' || e.key === 'N')) {
         e.preventDefault()
         setSearchQuery('')
@@ -144,12 +145,12 @@ function App(): JSX.Element {
       }
     }
     window.addEventListener('keydown', handleCtrlN)
-    return () => {
+    return (): void => {
       window.removeEventListener('keydown', handleCtrlN)
     }
   }, [])
 
-  const streamAiTranslation = async ({ content }): Promise<void> => {
+  const streamAiTranslation = async ({ content }: { content: string }): Promise<void> => {
     // Cancel any ongoing AI fetch (response or translation)
     if (aiAbortControllerRef.current) {
       aiAbortControllerRef.current.abort()
@@ -376,8 +377,9 @@ function App(): JSX.Element {
                           style={atomDark}
                           language={match[1]}
                           PreTag='div'
-                          children={String(children).replace(/\n$/, '')}
-                        />
+                        >
+                          {String(children).replace(/\n$/, '')}
+                        </SyntaxHighlighter>
                       ) : (
                         <code
                           {...props}
