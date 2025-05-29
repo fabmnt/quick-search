@@ -21,8 +21,8 @@
     "build:linux": "electron-vite build && electron-builder --linux"
   },
   "dependencies": {
-    "@ai-sdk/google": "^1.2.10",
-    "@ai-sdk/react": "^1.2.8",
+    "@ai-sdk/google": "^1.2.18",
+    "@ai-sdk/react": "^1.2.12",
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^4.0.0",
     "@fontsource/geist": "^5.2.5",

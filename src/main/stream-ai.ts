@@ -15,7 +15,7 @@ route.post('/prompt/title', async (req, res) => {
   const { prompt }: { prompt: string } = req.body
   try {
     const result = await generateObject({
-      model: google('gemini-2.0-flash-001'),
+      model: google('gemini-2.0-flash'),
       prompt: `Resume the following content in a short title: ${prompt.substring(0, 300)}`,
       schema: z.object({
         title: z.string().describe('A short and relevant title from the content provided')
@@ -30,14 +30,16 @@ route.post('/prompt/title', async (req, res) => {
 })
 
 route.post('/prompt/', async (req, res) => {
-  const { usePro } = req.query
-  const { prompt }: { prompt: string } = req.body
+  const { messages, system } = req.body
   try {
     const result = streamText({
-      model: google(usePro === 'true' ? 'gemini-2.5-pro-exp-03-25' : 'gemini-2.0-flash-001', {
+      model: google('gemini-2.0-flash', {
         useSearchGrounding: true
       }),
-      prompt
+      temperature: 0.7,
+      maxTokens: 1000,
+      system: system || 'You are a helpful assistant.',
+      messages
     })
 
     result.pipeTextStreamToResponse(res)
